@@ -2,8 +2,9 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import requests
+import io
 from tensorflow.keras.preprocessing.image import img_to_array
-from huggingface_hub import hf_hub_download
 
 # —— Setup UI —— #
 st.set_page_config(
@@ -15,20 +16,20 @@ st.set_page_config(
 st.title("🐶🐱 Cat vs Dog Classifier")
 st.markdown("""
 Upload gambar kucing atau anjing, dan model MobileNetV2 (Fine-Tuned) akan memprediksinya.  
-Model dimuat langsung dari Hugging Face Hub.
+Model dimuat langsung dari GitHub.
 """)
-
-# —— Load Model dari Hugging Face —— #
-@st.cache_resource
-def load_model_from_hf():
-    model_path = hf_hub_download(
-        repo_id="alifia1/cat",  # nama repo Hugging Face
-        filename="model_mobilenetv2.h5"  # nama file model
-    )
-    model = tf.keras.models.load_model(model_path, compile=False)
+https://github.com/alifiaazzahra1515-debug/cat
+# —— Load Model dari GitHub —— #
+@st.cache_resource 
+def load_model_from_github():
+    model_url = "https://github.com/alifiaazzahra1515-debug/cat"  # ganti dengan URL GitHub kamu
+    response = requests.get(model_url)
+    response.raise_for_status()  # biar error jelas kalau gagal download
+    model_bytes = io.BytesIO(response.content)
+    model = tf.keras.models.load_model(model_bytes, compile=False)
     return model
 
-model = load_model_from_hf()
+model = load_model_from_github()
 IMG_SIZE = 128
 
 # —— Preprocessing Function —— #
@@ -41,7 +42,6 @@ def preprocess(img: Image.Image):
 # —— Upload dan Prediksi —— #
 uploaded = st.file_uploader("🌄 Upload Gambar (jpg/png)", type=["jpg", "jpeg", "png"])
 if uploaded is not None:
-    # pastikan dibuka sebagai PIL Image
     img_pil = Image.open(uploaded)
     arr, img_display = preprocess(img_pil)
 
@@ -70,3 +70,4 @@ st.markdown("""
 - **Optimasi cache**: model tidak dimuat ulang setiap kali.
 - **Aksesibilitas**: bisa dijalankan langsung di Streamlit Cloud.
 """)
+
